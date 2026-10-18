@@ -2,8 +2,9 @@
 // Run with:  npx tgcloud run endpoints/selftest '{}'
 // With { cleanup: true } also deletes its own test rows.
 
-import { db, eq } from 'sdk/db';
-import { users, events } from '../schema.js';
+import { db, eq, desc } from 'sdk/db';
+import { api } from 'sdk';
+import { users, events, debugLog } from '../schema.js';
 
 const TEST_USER = -424242;
 const TEST_EVENT_DATE = '2000-01-01';
@@ -15,6 +16,19 @@ export default async function (input) {
     await db.delete(events).where(eq(events.ownerId, TEST_USER)).run();
     await db.delete(users).where(eq(users.id, TEST_USER)).run();
     return 'cleaned';
+  }
+
+  if (input && input.whoami === true) {
+    return api.getMe();
+  }
+
+  if (input && input.dumpDebug === true) {
+    return db.select().from(debugLog).orderBy(desc(debugLog.id)).limit(20).all();
+  }
+
+  if (input && input.clearDebug === true) {
+    await db.delete(debugLog).run();
+    return 'debug log cleared';
   }
 
   if (input && input.dumpOwnerId !== undefined) {

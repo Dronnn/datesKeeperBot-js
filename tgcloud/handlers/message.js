@@ -82,6 +82,8 @@ async function reply(message, text, replyMarkup) {
     chat_id: message.chat.id,
     text,
     reply_markup: replyMarkup,
+    // forum groups: keep the answer in the topic the command came from
+    ...(message.message_thread_id !== undefined && { message_thread_id: message.message_thread_id }),
   });
 }
 
@@ -245,14 +247,18 @@ async function cmdBatch(message, args, lang, ownerId, userId, today) {
 }
 
 async function cmdList(message, args, lang, ownerId, userId, today) {
-  await sendListPage(message.chat.id, lang, ownerId, today, 0);
+  await sendListPage(message.chat.id, lang, ownerId, today, 0, message.message_thread_id);
 }
 
-async function sendListPage(chatId, lang, ownerId, today, page) {
+async function sendListPage(chatId, lang, ownerId, today, page, threadId) {
   const rows = await listEvents(ownerId, PAGE_SIZE + 1, page * PAGE_SIZE);
 
   if (rows.length === 0) {
-    await api.sendMessage({ chat_id: chatId, text: t(lang, 'list_empty') });
+    await api.sendMessage({
+      chat_id: chatId,
+      text: t(lang, 'list_empty'),
+      ...(threadId !== undefined && { message_thread_id: threadId }),
+    });
     return;
   }
 
@@ -272,6 +278,7 @@ async function sendListPage(chatId, lang, ownerId, today, page) {
     chat_id: chatId,
     text: lines.join('\n'),
     reply_markup: keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined,
+    ...(threadId !== undefined && { message_thread_id: threadId }),
   });
 }
 

@@ -1,4 +1,4 @@
-import { table, integer, text, boolean, index, sql } from 'sdk/db';
+import { table, integer, text, boolean, json, index, sql } from 'sdk/db';
 
 // users.id is the Telegram user id (not auto-increment).
 // No foreign keys on this platform — integrity is enforced in app code.
@@ -28,3 +28,10 @@ export const events = table('events', {
 }, (t) => ({
   ownerIdx: index('idx_events_owner').on(t.ownerId),
 }));
+
+// Temporary debug table — records raw incoming updates to diagnose delivery.
+export const debugLog = table('debug_log', {
+  id:        integer('id').primaryKey({ autoIncrement: true }),
+  info:      json('info'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
